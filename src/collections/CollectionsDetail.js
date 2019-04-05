@@ -1,19 +1,36 @@
 import React, {Component} from 'react';
 import axios from 'axios'
-import {Col, Row, Divider, Card} from "antd";
-import Loading from "../Loading";
+import {Col, Row} from "antd";
+import Loading from "../layout/Loading";
 import CollectionsDetailsImages from "./CollectionsDetailsImages";
+import CollectionsDetailInfo from "./CollectionsDetailInfo";
 
 class CollectionsDetail extends Component {
-    state = {collection: {name: '', class_code: '', _id: ''}, loading: true};
+    state = {collection: {name: '', class_code: '', _id: '', images: []}, loading: true};
+
+    constructor(props) {
+        super(props);
+        this.getCollection = this.getCollection.bind(this);
+    }
+
 
     componentDidMount() {
         const id = this.props.match.params.id;
-        axios.get(`/api/collections/${id}`).then(response => this.setState({
+        this.getCollection(id);
+    }
+
+    getCollection(id) {
+        axios.get(`/api/collections/${id}/?embedded={"images":1}`).then(response => this.setState({
             collection: response.data,
             loading: false
         }));
     }
+
+    updateImages = (images) => {
+        const collection = this.state.collection;
+        collection.images = images;
+        this.setState({collection});
+    };
 
     render() {
         return (
@@ -23,24 +40,17 @@ class CollectionsDetail extends Component {
                         md={24}
                         lg={8}
                     >
-                        <Card>
-                            <Divider>ID</Divider>
-                            <h2>{this.state.collection._id}</h2>
-                            <Divider>Name</Divider>
-                            <h2>{this.state.collection.name}</h2>
-                            <Divider>Class code</Divider>
-                            <h2>{this.state.collection.class_code}</h2>
-                        </Card>
+                        <CollectionsDetailInfo collection={this.state.collection}/>
                     </Col>
                     <Col
                         md={24}
                         lg={16}
                     >
-                        {
-                            !this.state.loading ?
-                            <CollectionsDetailsImages collectionId={this.state.collection._id}/> :
-                            <p/>
-                        }
+                        <CollectionsDetailsImages
+                            collection={this.state.collection}
+                            updateImages={this.updateImages}
+                            getCollection={this.getCollection}
+                        />
                     </Col>
                 </Loading>
             </Row>

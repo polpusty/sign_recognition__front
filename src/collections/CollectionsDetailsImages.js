@@ -1,95 +1,101 @@
 import React, {Component} from 'react';
 import {Card, Table, Upload, Button, Icon, Divider, Avatar, Popconfirm} from "antd";
 import axios from 'axios';
-import Loading from "../Loading";
+import Loading from '../layout/Loading';
 
 const {Column} = Table;
 
 class CollectionsDetailsImages extends Component {
-    state = {images: [], loading: true};
+    state = {loading: false};
 
-    componentDidMount() {
-        const {collectionId} = this.props;
-        axios.get(`/api/images?collection=${collectionId}&sort=[("_created", -1)]`).then(response => this.setState({
-            images: response.data._items,
-            loading: false
-        }))
+    constructor(props) {
+        super(props);
+        this.beforeUpload = this.beforeUpload.bind(this);
+        this.onChangeUpload = this.onChangeUpload.bind(this);
     }
 
-    dataUploadImages = () => {
-        const {collectionId} = this.props;
-        return {collection: collectionId};
-    };
+    beforeUpload = () => this.setState({loading: true});
 
-    afterUploadImages = ({file}) => {
-        if (file.response) {
-            axios.get(`/api/images/${file.response._id}`).then(
-                response => this.setState({images: [response.data, ...this.state.images]}))
+    onChangeUpload = ({file, fileList}) => {
+        const {collection, getCollection} = this.props;
+        if (fileList.every(file => file.status === "done")) {
+            let imageIds = fileList.map(file => file.response._id);
+            if (collection.images) {
+                imageIds = [...collection.images.map(image => image._id), ...imageIds]
+            }
+            const headers = {'If-Match': collection._etag};
+            axios.patch(`/api/collections/${collection._id}`, {images: imageIds}, {headers: headers})
+                .then(() => {
+                    getCollection(collection._id);
+                    this.setState({loading: false})
+                })
         }
     };
 
     removeImage = (image) => {
+        const {updateImages, collection} = this.props;
         axios.delete(`/api/images/${image._id}`, {headers: {'If-Match': image._etag}}).then(() => {
-            const images = [...this.state.images];
+            const images = [...collection.images];
             const index = images.indexOf(image);
             images.splice(index, 1);
-            this.setState({images});
+            updateImages(images);
         });
     };
 
     render() {
+        const {collection} = this.props;
         return (
             <Card>
                 <Upload
                     showUploadList={false}
-                    onChange={this.afterUploadImages}
-                    data={this.dataUploadImages}
+                    onChange={this.onChangeUpload}
+                    beforeUpload={this.beforeUpload}
                     action="/api/images"
                     name="image"
                     multiple={true}
                     listType="picture"
                 >
-                    <Button size="large">
-                        <Icon type="upload"/> Add images
-                    </Button>
+                    <Loading loading={this.state.loading}>
+                        <Button size="large">
+                            <Icon type="upload"/> Add images
+                        </Button>
+                    </Loading>
                 </Upload>
                 <Divider/>
-                <Loading loading={this.state.loading}>
-                    <Table
-                        rowKey="_id"
-                        dataSource={this.state.images}
-                    >
-                        <Column
-                            title="ID"
-                            dataIndex="_id"
-                            key="_id"
-                        />
-                        <Column
-                            title="Image"
-                            dataIndex="image"
-                            key="image"
-                            render={image => (
-                                <a href={image} target="_blank" rel="noopener noreferrer">
-                                    <Avatar size={64} shape="square" src={image}/>
-                                </a>
-                            )}
-                        />
-                        <Column
-                            title="Actions"
-                            dataIndex="_id"
-                            key="actions"
-                            render={(_id, image) => (
-                                <Popconfirm title="Are you sure delete this image?"
-                                            onConfirm={() => this.removeImage(image)} okText="Yes"
-                                            cancelText="No">
-                                    <Button type="danger"><Icon type="delete"/></Button>
-                                </Popconfirm>
-                            )}
-                        />
-                    </Table>
-                </Loading>
+                <Table
+                    rowKey="_id"
+                    dataSource={collection.images}
+                >
+                    <Column
+                        title="ID"
+                        dataIndex="_id"
+                        key="_id"
+                    />
+                    <Column
+                        title="Image"
+                        dataIndex="image"
+                        key="image"
+                        render={image => (
+                            <a href={image} target="_blank" rel="noopener noreferrer">
+                                <Avatar size={64} shape="square" src={image}/>
+                            </a>
+                        )}
+                    />
+                    <Column
+                        title="Actions"
+                        dataIndex="_id"
+                        key="actions"
+                        render={(_id, image) => (
+                            <Popconfirm title="Are you sure delete this image?"
+                                        onConfirm={() => this.removeImage(image)} okText="Yes"
+                                        cancelText="No">
+                                <Button type="danger"><Icon type="delete"/></Button>
+                            </Popconfirm>
+                        )}
+                    />
+                </Table>
             </Card>
-        );
+        )
     }
 }
 

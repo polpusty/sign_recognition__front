@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {Link} from "react-router-dom";
 import axios from 'axios';
 import {Table, Popconfirm, Button, Icon} from "antd";
-import Loading from "../Loading";
+import Loading from "../layout/Loading";
 
 const {Column} = Table;
 
@@ -62,7 +62,8 @@ class CollectionsList extends Component {
                         )}
                     />
                 </Table>
-            </Loading>)
+            </Loading>
+        )
     }
 }
 
