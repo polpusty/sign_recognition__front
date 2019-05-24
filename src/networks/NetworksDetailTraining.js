@@ -2,10 +2,9 @@ import React, {Component} from 'react';
 import {Button, Card} from "antd";
 import {ResponsiveContainer, LineChart, XAxis, YAxis, Line} from 'recharts';
 import axios from 'axios';
-import Loading from '../layout/Loading';
 
 class NetworksDetailTraining extends Component {
-    state = {operation: null, data: [], intervalId: null};
+    state = {operation: null, data: [], intervalId: null, loading: false};
 
     constructor(props) {
         super(props);
@@ -22,21 +21,29 @@ class NetworksDetailTraining extends Component {
     }
 
     getData() {
-        if (this.state.operation !== null) {
+        if (this.state.operation !== null && this.state.loading) {
             axios.get(`/api/operations/${this.state.operation._id}`)
-                .then(response => this.setState({data: JSON.parse(response.data.step)}))
+                .then(response => {
+                    this.setState({data: JSON.parse(response.data.step)});
+                    if (response.data.status === "finished") {
+                        this.setState({loading: false});
+                    }
+                });
         }
     }
 
     trainNetwork = (network) => {
-        axios.post(`/api/networks/train/${network._id}`).then(response => this.setState({operation: response.data}))
+        axios.post(`/api/networks/train/${network._id}`).then(response => this.setState({
+            operation: response.data,
+            loading: true,
+            data: []
+        }))
     };
 
     render() {
         const {network} = this.props;
         return (
             <Card>
-                <Button onClick={() => this.trainNetwork(network)} block>Train</Button>
                 {0 !== this.state.data.length ?
                     <ResponsiveContainer
                         height={200}
@@ -49,7 +56,10 @@ class NetworksDetailTraining extends Component {
                             <YAxis/>
                             <Line dataKey="predict"/>
                         </LineChart>
-                    </ResponsiveContainer> : ''}
+                    </ResponsiveContainer>
+                    :
+                    <Button loading={this.state.loading} onClick={() => this.trainNetwork(network)} block>Train</Button>
+                }
             </Card>
         );
     }

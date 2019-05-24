@@ -8,9 +8,9 @@ class NetworksDetailTrainingChart extends Component {
                 height={200}
                 width="100%"
             >
-                {this.props.data.length !== 0 ?
+                {this.props.answearPrediction.length !== 0 ?
                     <LineChart
-                        data={this.props.data}
+                        data={this.props.answearPrediction}
                     >
                         <XAxis dataKey="name"/>
                         <YAxis/>
