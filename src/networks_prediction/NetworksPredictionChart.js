@@ -4,21 +4,25 @@ import {ResponsiveContainer, BarChart, XAxis, YAxis, Bar, Tooltip} from 'rechart
 class NetworksPredictionChart extends Component {
     render() {
         const {data} = this.props;
-        if(data.length !== 0) {
+        if (data.length !== 0) {
+            const answer = data.reduce((prev, current) => (prev.predict > current.predict) ? prev : current);
             return (
-                <ResponsiveContainer
-                    width="100%"
-                    height={200}
-                >
-                    <BarChart
-                        data={data}
+                <div>
+                    <h2>Network predict: {answer.name}</h2>
+                    <ResponsiveContainer
+                        width="100%"
+                        height={200}
                     >
-                        <XAxis dataKey="name"/>
-                        <YAxis/>
-                        <Tooltip/>
-                        <Bar dataKey="predict" fill="#1890ff"/>
-                    </BarChart>
-                </ResponsiveContainer>
+                        <BarChart
+                            data={data}
+                        >
+                            <XAxis dataKey="class_code"/>
+                            <YAxis/>
+                            <Tooltip/>
+                            <Bar dataKey="predict" fill="#1890ff"/>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             );
         } else {
             return ''

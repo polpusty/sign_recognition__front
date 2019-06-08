@@ -23,7 +23,11 @@ class NetworksPrediction extends Component {
             axios.post(`/api/networks/predict/${this.state.selectedNetwork._id}/${this.state.image._id}`
             ).then(response => {
                 const data = response.data[0].map((predict, index) => {
-                    return {name: this.state.selectedNetwork.collections[index].name, predict: predict}
+                    return {
+                        class_code: this.state.selectedNetwork.collections[index].class_code,
+                        name: this.state.selectedNetwork.collections[index].name,
+                        predict: predict
+                    }
                 });
                 this.setState({answerPrediction: data, loading: false});
             });
